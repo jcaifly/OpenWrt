@@ -36,6 +36,7 @@ jobs:
     # This is NECESSARY for creating GitHub Releases and uploading assets
     permissions:
       contents: write
+      actions: write
 
     steps:
     - name: Checkout # Checks-out your repository under $GITHUB_WORKSPACE
