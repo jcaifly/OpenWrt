@@ -18,3 +18,6 @@ sed -i 's/192.168.1.1/192.168.123.1/g' package/base-files/files/bin/config_gener
 
 # Modify hostname
 #sed -i 's/OpenWrt/P3TERX-Router/g' package/base-files/files/bin/config_generate
+
+# 磁盘管理
+git clone https://github.com/lisaac/luci-app-diskman package/danxiaonuo/luci-app-diskman
