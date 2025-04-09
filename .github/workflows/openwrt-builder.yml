@@ -9,21 +9,31 @@
 # This is free software, licensed under the MIT License.
 # See /LICENSE for more information.
 #
+# MODIFIED TO USE OFFICIAL OPENWRT SOURCE
+#
 
-name: OpenWrt Builder
+name: OpenWrt Builder (Official Source)
 
 on:
   repository_dispatch:
   workflow_dispatch: # Allows manual triggering
 
 env:
-  REPO_URL: https://github.com/coolsnowwolf/lede # OpenWrt source repository URL
-  REPO_BRANCH: master                             # OpenWrt source repository branch
-  FEEDS_CONF: feeds.conf.default                  # Custom feeds configuration file name
-  CONFIG_FILE: .config                            # Custom configuration file name
-  DIY_P1_SH: diy-part1.sh                         # First part of DIY script
-  DIY_P2_SH: diy-part2.sh                         # Second part of DIY script
-  UPLOAD_BIN_DIR: false                           # Whether to upload the 'bin' directory artifact (usually large)
+  # --- MODIFIED: Using Official OpenWrt Source ---
+  REPO_URL: https://github.com/openwrt/openwrt # Changed from coolsnowwolf/lede
+  # --- MODIFIED: Specify Official OpenWrt Branch ---
+  # Options:
+  #   'master'       -> Development Snapshot (Bleeding Edge, use with caution)
+  #   'openwrt-23.05' -> Stable Release Branch (Recommended for general use)
+  #   'openwrt-22.03' -> Older Stable Release Branch
+  REPO_BRANCH: openwrt-23.05 # Changed from coolsnowwolf/lede default, adjust to desired branch (e.g., openwrt-23.05)
+  # ----------------------------------------------
+
+  FEEDS_CONF: feeds.conf.default                  # Custom feeds configuration file name (in your repo)
+  CONFIG_FILE: .config                            # Custom configuration file name (in your repo)
+  DIY_P1_SH: diy-part1.sh                         # First part of DIY script (in your repo) - IMPORTANT: Ensure compatibility with official OpenWrt
+  DIY_P2_SH: diy-part2.sh                         # Second part of DIY script (in your repo) - IMPORTANT: Ensure compatibility with official OpenWrt
+  UPLOAD_BIN_DIR: false                           # Whether to upload the 'bin' directory artifact
   UPLOAD_FIRMWARE: true                           # Whether to upload the final firmware artifact
   UPLOAD_RELEASE: true                            # Whether to create a GitHub Release with the firmware
   TZ: Asia/Shanghai                               # Timezone for build environment and release tags
@@ -32,23 +42,21 @@ jobs:
   build:
     runs-on: ubuntu-22.04
 
-    # Add this permissions block to grant write access to repository contents
-    # This is NECESSARY for creating GitHub Releases and uploading assets
     permissions:
-      contents: write
-      actions: write
+      contents: write # Needed for creating releases
+      actions: write  # Needed for deleting workflow runs
 
     steps:
     - name: Checkout # Checks-out your repository under $GITHUB_WORKSPACE
-      uses: actions/checkout@v4 # Use a specific version like v4
+      uses: actions/checkout@v4
 
     - name: Initialization environment # Installs build dependencies
       env:
-        DEBIAN_FRONTEND: noninteractive # Prevents interactive prompts during apt-get install
+        DEBIAN_FRONTEND: noninteractive
       run: |
         echo "Initializing environment..."
-        sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL # Clean up some space
-        sudo docker image prune --all --force # Clean up Docker images if any
+        sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+        sudo docker image prune --all --force
         sudo -E apt-get -qq update
         sudo -E apt-get -qq install ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential bzip2 ccache cmake cpio curl device-tree-compiler fastjar flex gawk gettext gcc-multilib g++-multilib git gperf haveged help2man intltool libc6-dev-i386 libelf-dev libfuse-dev libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses5-dev libncursesw5-dev libpython3-dev libreadline-dev libssl-dev libtool lrzsz mkisofs msmtp ninja-build p7zip p7zip-full patch pkgconf python2.7 python3 python3-pyelftools python3-setuptools qemu-utils rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev
         sudo -E apt-get -qq autoremove --purge
@@ -58,78 +66,98 @@ jobs:
         sudo chown $USER:$GROUPS /workdir
         echo "Environment initialized."
 
-    - name: Clone source code # Clones the specified OpenWrt source code
+    - name: Clone Official OpenWrt source code # Clones the official OpenWrt source
       working-directory: /workdir
       run: |
-        echo "Cloning OpenWrt source from $REPO_URL branch $REPO_BRANCH..."
+        echo "Cloning Official OpenWrt source from $REPO_URL branch $REPO_BRANCH..."
         df -hT $PWD
-        git clone --depth 1 $REPO_URL -b $REPO_BRANCH openwrt # Use --depth 1 for faster clone if full history isn't needed
-        ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt # Create a symlink for easier access if needed
-        echo "Source code cloned."
+        git clone --depth 1 $REPO_URL -b $REPO_BRANCH openwrt
+        ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
+        echo "Official source code cloned."
+        # --- IMPORTANT: Add your custom feeds here if not handled by DIY script ---
+        # Example: Add kenzo and small feeds if FEEDS_CONF doesn't exist or diy-part1.sh doesn't handle it
+        # echo 'src-git kenzo https://github.com/kenzok8/openwrt-packages' >> openwrt/feeds.conf.default
+        # echo 'src-git small https://github.com/kenzok8/small' >> openwrt/feeds.conf.default
+        # ------------------------------------------------------------------------
 
-    - name: Load custom feeds # Copies your custom feeds config and runs the first DIY script
+    - name: Load custom feeds and run DIY P1 # Copies custom feeds config, runs DIY script Part 1
       run: |
-        echo "Loading custom feeds..."
+        echo "Loading custom feeds configuration..."
         if [ -e "$FEEDS_CONF" ]; then
           cp "$FEEDS_CONF" openwrt/feeds.conf.default
-          echo "Custom feeds config loaded."
+          echo "Custom feeds config '$FEEDS_CONF' loaded."
         else
-          echo "No custom feeds config ($FEEDS_CONF) found."
+          echo "No custom feeds config ($FEEDS_CONF) found. Using default or feeds added in previous step."
         fi
+        echo "Running DIY script Part 1 (if exists)..."
         if [ -e "$DIY_P1_SH" ]; then
           chmod +x "$DIY_P1_SH"
           cd openwrt
+          # Execute the script from the checked-out workspace directory
           "$GITHUB_WORKSPACE/$DIY_P1_SH"
           cd .. # Go back to the workspace root
-          echo "Executed DIY script part 1."
+          echo "Executed DIY script '$DIY_P1_SH'."
         else
            echo "No DIY script part 1 ($DIY_P1_SH) found."
         fi
 
-    - name: Update feeds # Updates the feed sources
+    - name: Update feeds # Updates the feed sources defined in feeds.conf.default
       run: |
         echo "Updating feeds..."
         cd openwrt
         ./scripts/feeds update -a
         echo "Feeds updated."
 
-    - name: Install feeds # Installs packages from the feeds
+    - name: Install feeds # Installs packages definitions from the feeds
       run: |
         echo "Installing feeds..."
         cd openwrt
         ./scripts/feeds install -a
         echo "Feeds installed."
 
-    - name: Load custom configuration # Copies custom files, config, and runs the second DIY script
+    - name: Load custom configuration and run DIY P2 # Copies custom files, config, runs DIY script Part 2
       run: |
-        echo "Loading custom configuration..."
+        echo "Loading custom 'files' directory (if exists)..."
         if [ -d files ]; then
           cp -r files openwrt/
            echo "Custom 'files' directory loaded."
         fi
+        echo "Loading custom '.config' file..."
         if [ -e "$CONFIG_FILE" ]; then
            cp "$CONFIG_FILE" openwrt/.config
-           echo "Custom '.config' file loaded."
+           echo "Custom '.config' file '$CONFIG_FILE' loaded."
         else
-           echo "No custom '.config' file ($CONFIG_FILE) found."
-           # Optionally, add a 'make defconfig' or similar here if no .config is provided
+           echo "No custom '.config' file ($CONFIG_FILE) found. Build might fail or use defaults."
+           # Consider adding error handling or default config generation here
         fi
+        echo "Running DIY script Part 2 (if exists)..."
         if [ -e "$DIY_P2_SH" ]; then
           chmod +x "$DIY_P2_SH"
           cd openwrt
+          # Execute the script from the checked-out workspace directory
           "$GITHUB_WORKSPACE/$DIY_P2_SH"
           cd .. # Go back to the workspace root
-          echo "Executed DIY script part 2."
+          echo "Executed DIY script '$DIY_P2_SH'."
         else
            echo "No DIY script part 2 ($DIY_P2_SH) found."
         fi
+        # --- IMPORTANT: Verify .config compatibility ---
+        # It's recommended to run 'make defconfig' here to ensure the loaded .config
+        # is validated against the official source and dependencies are calculated.
+        # The 'make defconfig' in the next step handles this, but doing it here
+        # can catch config errors earlier.
+        # cd openwrt && make defconfig && cd ..
+        # ----------------------------------------------
 
-    - name: Download package sources # Downloads sources for selected packages
+    - name: Download package sources & Validate .config # Downloads sources and runs defconfig
       id: package
       run: |
-        echo "Downloading package sources..."
+        echo "Validating configuration and downloading package sources..."
         cd openwrt
-        make defconfig # Ensure .config is valid and complete dependencies
+        # --- THIS IS CRUCIAL for official source ---
+        # Validates the .config, completes dependencies based on official source tree
+        make defconfig
+        # -----------------------------------------
         make download -j$(nproc) # Use nproc for parallel download
         echo "Cleaning up small/empty download files..."
         find dl -size -1024c -exec ls -l {} \; # List small files before deleting
@@ -142,10 +170,12 @@ jobs:
         echo "Starting firmware compilation..."
         cd openwrt
         echo "Using $(nproc) threads for compilation."
-        make -j$(nproc) || make -j1 || make -j1 V=s # Compile with multiple threads, retry with 1 thread if failed, then verbose output
+        # Retry logic: try parallel, then single thread, then single thread verbose
+        make -j$(nproc) || make -j1 || make -j1 V=s
         echo "status=success" >> $GITHUB_OUTPUT # Set status for subsequent steps
         echo "Compilation finished."
         # Prepare environment variables for artifacts/release naming
+        # Ensure device name uses underscores as per official OpenWrt conventions if needed
         DEVICE_NAME_TMP=$(grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' | head -n 1)
         if [ -n "$DEVICE_NAME_TMP" ]; then
             echo "DEVICE_NAME=_$DEVICE_NAME_TMP" >> $GITHUB_ENV
@@ -161,7 +191,7 @@ jobs:
         df -hT
 
     - name: Upload bin directory (Optional) # Uploads the entire 'bin' directory as artifact
-      uses: actions/upload-artifact@v4 # Use specific version
+      uses: actions/upload-artifact@v4
       if: steps.compile.outputs.status == 'success' && env.UPLOAD_BIN_DIR == 'true' && !cancelled()
       with:
         name: OpenWrt_bin${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
@@ -172,14 +202,16 @@ jobs:
       if: env.UPLOAD_FIRMWARE == 'true' && steps.compile.outputs.status == 'success' && !cancelled()
       run: |
         echo "Organizing firmware files..."
-        cd openwrt/bin/targets/*/* # Navigate to the target-specific directory
+        # Adjust path globbing if needed for official OpenWrt target structure
+        cd openwrt/bin/targets/*/*
         rm -rf packages # Remove the packages subdirectory
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV # Set firmware path environment variable
         echo "Firmware directory: $PWD"
+        ls -l # List files to be uploaded
         echo "status=success" >> $GITHUB_OUTPUT
 
     - name: Upload firmware directory as artifact # Uploads only the firmware files
-      uses: actions/upload-artifact@v4 # Use specific version
+      uses: actions/upload-artifact@v4
       if: steps.organize.outputs.status == 'success' && !cancelled()
       with:
         name: OpenWrt_firmware${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
@@ -192,41 +224,45 @@ jobs:
         echo "Generating release tag and notes..."
         echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
         touch release.txt
-        # The UPLOAD_GOFILE logic is commented out as it wasn't defined/used in the original script
-        # [ -n "${UPLOAD_GOFILE}" ] && [ "${UPLOAD_GOFILE}" = "true" ] && [ -n "${{ steps.gofile.outputs.url }}" ] && echo "🔗 [GoFile](${{ steps.gofile.outputs.url }})" >> release.txt
         # Add commit hash or other info if desired:
-        # LATEST_COMMIT_HASH=$(git log -1 --pretty=format:"%h")
-        # echo "Based on commit: ${LATEST_COMMIT_HASH}" >> release.txt
+        cd openwrt
+        # Get hash of the official OpenWrt source cloned
+        OPENWRT_HASH=$(git log -1 --pretty=format:"%h")
+        echo "Based on OpenWrt commit: ${OPENWRT_HASH}" >> ../release.txt
+        # Optionally add hash of your own repo commit
+        # YOUR_REPO_HASH=$(git rev-parse --short HEAD)
+        # echo "Workflow triggered by commit: ${YOUR_REPO_HASH}" >> ../release.txt
+        cd ..
         echo "Release notes generated."
         echo "status=success" >> $GITHUB_OUTPUT
 
     - name: Upload firmware to release # Creates a GitHub Release and uploads firmware files
-      uses: softprops/action-gh-release@v1 # Use specific version v1 (recommended over master)
+      uses: softprops/action-gh-release@v1
       if: steps.tag.outputs.status == 'success' && !cancelled()
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Uses the automatically provided token with permissions set above
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ steps.tag.outputs.release_tag }}
-        name: OpenWrt Firmware ${{ steps.tag.outputs.release_tag }}${{ env.DEVICE_NAME }} # Customize release title
-        body_path: release.txt # Path to release notes file
-        files: ${{ env.FIRMWARE }}/* # Upload all files from the firmware directory
-        # draft: false # Set to true to create a draft release
-        # prerelease: false # Set to true to mark as pre-release
+        name: OpenWrt Firmware (Official) ${{ steps.tag.outputs.release_tag }}${{ env.DEVICE_NAME }} # Added "(Official)" to title
+        body_path: release.txt
+        files: ${{ env.FIRMWARE }}/*
+        # draft: false
+        # prerelease: false
 
-    - name: Delete workflow runs # Deletes older workflow runs to save space
-      uses: Mattraks/delete-workflow-runs@v2 # Use specific version
-      if: always() # Run even if previous steps fail (but after release attempt)
+    - name: Delete workflow runs # Deletes older workflow runs
+      uses: Mattraks/delete-workflow-runs@v2
+      if: always()
       with:
-        token: ${{ secrets.GITHUB_TOKEN }} # Needs token for API access
+        token: ${{ secrets.GITHUB_TOKEN }}
         repository: ${{ github.repository }}
-        retain_days: 0 # Keep runs only for 0 days (delete immediately after completion?) Adjust if needed
-        keep_minimum_runs: 2 # Keep at least the last 2 runs
+        retain_days: 0 # Adjust retain_days as needed (e.g., 5)
+        keep_minimum_runs: 2
 
     - name: Remove old Releases # Deletes older GitHub releases
-      uses: dev-drprasad/delete-older-releases@v0.2.1 # Use a specific version
+      uses: dev-drprasad/delete-older-releases@v0.2.1
       if: env.UPLOAD_RELEASE == 'true' && !cancelled()
       with:
-        keep_latest: 3 # Keep the 3 most recent releases
-        delete_tags: true # Also delete the associated Git tags
+        keep_latest: 3
+        delete_tags: true
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needs token for API access
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
