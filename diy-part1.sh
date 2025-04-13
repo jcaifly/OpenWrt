@@ -23,9 +23,9 @@ echo "克隆 OpenClash 软件包 (来自 vernesong)..."
 git clone --depth 1 https://github.com/vernesong/OpenClash.git package/luci-app-openclash
 echo "OpenClash 克隆完成。"
 
-# 2. Turbo ACC 网络加速
-# !! 注意：URL 与常见的 immortalwrt-collections 不同，请确认 !!
-echo "克隆 TurboACC 软件包 (来自 chenmozhijin, 描述为 immortalwrt-collections)..."
+# 2. Turbo ACC 网络加速 (使用 chenmozhijin 源)
+echo "克隆 TurboACC 软件包 (来自 chenmozhijin)..."
+# 注意：此 URL 似乎是当前有效的 TurboACC 来源
 git clone --depth 1 https://github.com/chenmozhijin/turboacc.git package/luci-app-turboacc
 echo "TurboACC 克隆完成。"
 
@@ -34,9 +34,9 @@ echo "克隆 Partexp 软件包 (来自 sirpdboy)..."
 git clone --depth 1 https://github.com/sirpdboy/luci-app-partexp.git package/luci-app-partexp
 echo "Partexp 克隆完成。"
 
-# 4. Diskman (图形化磁盘管理)
-# !! 注意：URL 与常见的 lloyd18 不同，请确认 !!
-echo "克隆 Diskman 软件包 (来自 lisaac, 描述为 lloyd18)..."
+# 4. Diskman (图形化磁盘管理) (使用 lisaac 源)
+echo "克隆 Diskman 软件包 (来自 lisaac)..."
+# 注意：lloyd18 源已失效，使用 lisaac 替代
 git clone --depth 1 https://github.com/lisaac/luci-app-diskman.git package/luci-app-diskman
 echo "Diskman 克隆完成。"
 
