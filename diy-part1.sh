@@ -25,7 +25,7 @@ echo "OpenClash 克隆完成。"
 
 # 2. Turbo ACC 网络加速
 echo "克隆 TurboACC 软件包 (来自 immortalwrt-collections)..."
-git clone --depth 1 https://github.com/immortalwrt-collections/luci-app-turboacc.git package/luci-app-turboacc
+git clone --depth 1 https://github.com/chenmozhijin/turboacc.git package/luci-app-turboacc
 echo "TurboACC 克隆完成。"
 
 # 3. Partexp (分区扩容工具)
@@ -35,8 +35,7 @@ echo "Partexp 克隆完成。"
 
 # 4. Diskman (图形化磁盘管理)
 echo "克隆 Diskman 软件包 (来自 lloyd18)..."
-git clone https://github.com/lloyd18/luci-app-diskman.git package/luci-app-diskman
-# 注意：根据您提供的示例，Diskman 克隆未使用 --depth 1
+git clone --depth 1 https://github.com/lisaac/luci-app-diskman.git package/luci-app-diskman
 echo "Diskman 克隆完成。"
 
 # 5. PoweroffDevice (替代 Advanced Reboot/Shutdown)
