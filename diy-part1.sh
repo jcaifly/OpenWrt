@@ -36,13 +36,17 @@ echo "Partexp 克隆完成。"
 # 4. Diskman (图形化磁盘管理)
 echo "克隆 Diskman 软件包 (来自 lloyd18)..."
 git clone https://github.com/lloyd18/luci-app-diskman.git package/luci-app-diskman
+# 注意：根据您提供的示例，Diskman 克隆未使用 --depth 1
 echo "Diskman 克隆完成。"
 
-# 5. Advanced Reboot (替代 Shutdown)
-echo "克隆 Advanced Reboot 软件包 (来自 stangri)..."
-git clone --depth 1 https://github.com/stangri/luci-app-advanced-reboot.git package/luci-app-advanced-reboot
-echo "Advanced Reboot 克隆完成。"
+# 5. PoweroffDevice (替代 Advanced Reboot/Shutdown)
+echo "克隆 PoweroffDevice 软件包 (来自 sirpdboy)..."
+git clone --depth 1 https://github.com/sirpdboy/luci-app-poweroffdevice.git package/luci-app-poweroffdevice
+echo "PoweroffDevice 克隆完成。"
 
 # --- 如果需要其他独立的软件包，请在下方添加 ---
+# echo "克隆 xxx 软件包..."
+# git clone --depth 1 <你的仓库URL> package/<软件包目录名>
+# echo "xxx 克隆完成。"
 
 echo "DIY 脚本第 1 部分执行完毕: 已克隆必要的独立软件包。"
