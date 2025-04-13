@@ -1,7 +1,7 @@
 #
 # https://github.com/P3TERX/Actions-OpenWrt
 #
-# File: .github/workflows/openwrt-bulder.yml
+# File: .github/workflows/openwrt-builder.yml
 # Description: Build OpenWrt using GitHub Actions
 #
 # Copyright (c) 2019-2024 P3TERX <https://p3terx.com>
@@ -40,63 +40,125 @@ jobs:
       env:
         DEBIAN_FRONTEND: noninteractive
       run: |
-        sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
-        sudo docker image prune --all --force
+        echo "Starting environment initialization..."
+        sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL || echo "Optional cleanup failed, continuing..."
+        sudo docker image prune --all --force || echo "Docker prune failed, continuing..."
         sudo -E apt-get -qq update
+        echo "Installing required packages..."
         sudo -E apt-get -qq install ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential bzip2 ccache cmake cpio curl device-tree-compiler fastjar flex gawk gettext gcc-multilib g++-multilib git gperf haveged help2man intltool libc6-dev-i386 libelf-dev libfuse-dev libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses5-dev libncursesw5-dev libpython3-dev libreadline-dev libssl-dev libtool lrzsz mkisofs msmtp ninja-build p7zip p7zip-full patch pkgconf python2.7 python3 python3-pyelftools python3-setuptools qemu-utils rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev
+        echo "Cleaning up apt cache..."
         sudo -E apt-get -qq autoremove --purge
         sudo -E apt-get -qq clean
+        echo "Setting timezone..."
         sudo timedatectl set-timezone "$TZ"
+        echo "Creating work directory..."
         sudo mkdir -p /workdir
         sudo chown $USER:$GROUPS /workdir
+        echo "Environment initialization complete."
 
     - name: Clone source code
       working-directory: /workdir
       run: |
+        echo "Cloning OpenWrt repository..."
         df -hT $PWD
-        git clone $REPO_URL -b $REPO_BRANCH openwrt
+        git clone --depth 1 $REPO_URL -b $REPO_BRANCH openwrt # Use --depth 1 to speed up clone
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
+        echo "Cloning complete."
 
     - name: Load custom feeds
       run: |
+        echo "Loading custom feeds..."
         [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
-        chmod +x $DIY_P1_SH
-        cd openwrt
-        $GITHUB_WORKSPACE/$DIY_P1_SH
+        if [ -f "$DIY_P1_SH" ]; then
+          chmod +x $DIY_P1_SH
+          cd openwrt
+          echo "Running diy-part1.sh..."
+          $GITHUB_WORKSPACE/$DIY_P1_SH
+          cd .. # Return to previous directory
+        else
+           echo "diy-part1.sh not found, skipping."
+        fi
+        echo "Custom feeds loading process finished."
 
     - name: Update feeds
-      run: cd openwrt && ./scripts/feeds update -a
+      run: |
+        echo "Updating feeds..."
+        cd openwrt && ./scripts/feeds update -a
+        echo "Feeds update complete."
 
     - name: Install feeds
-      run: cd openwrt && ./scripts/feeds install -a
+      run: |
+        echo "Installing feeds..."
+        cd openwrt && ./scripts/feeds install -a
+        echo "Feeds installation complete."
 
     - name: Load custom configuration
       run: |
-        [ -e files ] && mv files openwrt/files
-        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
-        chmod +x $DIY_P2_SH
+        echo "Loading custom configuration..."
+        if [ -e files ]; then
+          echo "Moving custom files..."
+          mv files openwrt/files
+        fi
+        if [ -e $CONFIG_FILE ]; then
+          echo "Moving .config file..."
+          mv $CONFIG_FILE openwrt/.config
+          echo "Initial .config content provided by user:"
+          cat openwrt/.config || echo "(Could not read .config)" # Debug: Show initial config
+        else
+          echo ".config file not found in repository."
+        fi
+        if [ -f "$DIY_P2_SH" ]; then
+          chmod +x $DIY_P2_SH
+          cd openwrt
+          echo "Running diy-part2.sh..."
+          $GITHUB_WORKSPACE/$DIY_P2_SH
+          echo "After running diy-part2.sh, .config content:"
+          cat .config || echo "(Could not read .config)" # Debug: Show config after DIY script
+          cd .. # Return to previous directory
+        else
+           echo "diy-part2.sh not found, skipping."
+        fi
+        echo "Custom configuration loading finished."
+
+    # ********** 新增步骤: 清理内核编译目录 **********
+    - name: Clean Kernel Build Directory
+      run: |
+        echo "Cleaning kernel build directory to prevent stale config issues..."
         cd openwrt
-        $GITHUB_WORKSPACE/$DIY_P2_SH
+        make target/linux/clean V=s # Add V=s for verbose cleaning output
+        echo "Kernel build directory cleaned."
 
     - name: Download package
       id: package
       run: |
+        echo "Generating final configuration and downloading packages..."
         cd openwrt
+        # Generate the final .config file non-interactively, handling dependencies and defaults
         make defconfig
-        make download -j8
+        echo "Final .config content after make defconfig:"
+        cat .config || echo "(Could not read .config)" # Debug: Show final config used for build
+        echo "Starting package download..."
+        make download -j8 # Use a reasonable number of parallel jobs
+        echo "Checking for small files in download cache..."
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
+        echo "Package download process finished."
 
     - name: Compile the firmware
       id: compile
       run: |
+        echo "Starting firmware compilation..."
         cd openwrt
-        echo -e "$(nproc) thread compile"
-        make -j$(nproc) || make -j1 || make -j1 V=s
+        echo "$(nproc) threads compile"
+        # ********** 修改: 为编译命令添加 V=s **********
+        make -j$(nproc) V=s || make -j1 V=s # Added V=s for detailed compile logs
         echo "status=success" >> $GITHUB_OUTPUT
+        # Extract device name for artifact naming
         grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
-        [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
+        [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV || echo "DEVICE_NAME=" >> $GITHUB_ENV
         echo "FILE_DATE=_$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
+        echo "Firmware compilation finished."
+      # Removed || make -j1 V=s at the end as it was redundant if the first make -j1 V=s fails.
 
     - name: Check space usage
       if: (!cancelled())
@@ -111,12 +173,15 @@ jobs:
 
     - name: Organize files
       id: organize
-      if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
+      if: env.UPLOAD_FIRMWARE == 'true' && !cancelled() && steps.compile.outputs.status == 'success' # Ensure compile succeeded
       run: |
-        cd openwrt/bin/targets/*/*
-        rm -rf packages
+        echo "Organizing firmware files..."
+        cd openwrt/bin/targets/*/* || exit 1 # Exit if path doesn't exist
+        rm -rf packages || echo "No packages directory to remove."
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
         echo "status=success" >> $GITHUB_OUTPUT
+        ls -lh # List firmware files for confirmation
+        echo "Firmware files organized."
 
     - name: Upload firmware directory
       uses: actions/upload-artifact@main
@@ -127,32 +192,45 @@ jobs:
 
     - name: Generate release tag
       id: tag
-      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+      if: env.UPLOAD_RELEASE == 'true' && !cancelled() && steps.compile.outputs.status == 'success' # Ensure compile succeeded
       run: |
+        echo "Generating release tag and notes..."
         echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
-        touch release.txt
-        [ ${UPLOAD_GOFILE} = true && ${{ steps.gofile.outputs.url }} ] && echo "🔗 [GoFile](${{ steps.gofile.outputs.url }})" >> release.txt
+        # You can customize the release notes here
+        echo "Automated OpenWrt build for ${{ env.DEVICE_NAME }} released on $(date +"%Y-%m-%d %H:%M:%S %Z")" > release.txt
+        # Add more details if needed, e.g., list included packages or git commit hash
+        # Example: git -C /workdir/openwrt log --pretty=format:'%h' -1 >> release.txt
         echo "status=success" >> $GITHUB_OUTPUT
+        echo "Release tag and notes generated."
 
     - name: Upload firmware to release
-      uses: softprops/action-gh-release@master
+      uses: softprops/action-gh-release@v2 # Updated to v2
       if: steps.tag.outputs.status == 'success' && !cancelled()
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ steps.tag.outputs.release_tag }}
         body_path: release.txt
-        files: ${{ env.FIRMWARE }}/*
+        files: |
+          ${{ env.FIRMWARE }}/*sysupgrade*
+          ${{ env.FIRMWARE }}/*factory*
+          ${{ env.FIRMWARE }}/*.manifest
+          ${{ env.FIRMWARE }}/sha256sums
+          ${{ env.FIRMWARE }}/config.buildinfo
+        # Use pattern matching for common firmware files, adjust if needed
 
     - name: Delete workflow runs
-      uses: Mattraks/delete-workflow-runs@main
+      uses: Mattraks/delete-workflow-runs@v2 # Updated to v2
+      if: always() # Run even if previous steps fail, to clean up runs
       with:
+        token: ${{ secrets.GITHUB_TOKEN }} # Use GITHUB_TOKEN provided by Actions runner
+        repository: ${{ github.repository }}
         retain_days: 0
         keep_minimum_runs: 2
 
     - name: Remove old Releases
-      uses: dev-drprasad/delete-older-releases@master
-      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+      uses: dev-drprasad/delete-older-releases@v1.0.0 # Use a specific version tag
+      if: env.UPLOAD_RELEASE == 'true' && !cancelled() && steps.compile.outputs.status == 'success' # Run only on success
       with:
         keep_latest: 3
         delete_tags: true
