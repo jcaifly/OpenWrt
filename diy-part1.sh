@@ -3,7 +3,7 @@
 # https://github.com/P3TERX/Actions-OpenWrt
 # File name: diy-part1.sh
 # Description: OpenWrt DIY script part 1 (Before Update feeds)
-# Using independent sources for each key package instead of collection feeds.
+# Using independent sources for each key package. NO aggregate feeds used.
 #
 # Copyright (c) 2019-2024 P3TERX <https://p3terx.com>
 #
@@ -12,31 +12,31 @@
 #
 
 # --- Feed Management ---
-# No community collection feeds like 'kenzo' or 'small' will be added.
-# echo "Removing potentially conflicting default feeds if necessary..."
-# Example: sed -i '/packages.mk/d' feeds.conf.default # Uncomment if needed
+# No community collection feeds like 'kenzo' or 'small' will be added from this script.
+# Ensure your base feeds.conf.default is sufficient for base dependencies.
+echo "Starting diy-part1.sh: Managing packages from independent sources..."
 
 # --- Manual Package Cloning ---
 # Clone required packages directly from their individual repositories.
 
-echo 'Cloning OpenClash package from vernesong...'
-# Clone OpenClash repository
+echo "Cloning OpenClash package from vernesong..."
+# 克隆 OpenClash 仓库到 'package/' 下，构建系统会自动查找
 git clone --depth 1 https://github.com/vernesong/OpenClash.git package/luci-app-openclash
-# Note: Sometimes cloning the repo under a simpler name like 'package/openclash' and letting make find 'luci-app-openclash' inside also works.
-# Let's stick to a path that is more likely to be found directly. If build fails finding it, adjust the path.
+echo "OpenClash cloned."
 
-echo 'Cloning TurboACC package...'
-# Clone TurboACC package from immortalwrt-collections (often stable)
+echo "Cloning TurboACC package from immortalwrt-collections..."
+# 克隆 TurboACC 仓库
 git clone --depth 1 https://github.com/immortalwrt-collections/luci-app-turboacc.git package/luci-app-turboacc
-# Alternatively, try 'chenmoha' source if the above fails:
-# git clone --depth 1 https://github.com/chenmoha/luci-app-turboacc.git package/luci-app-turboacc
+echo "TurboACC cloned."
 
-echo 'Cloning Partexp (Partition Expansion Tool) package...'
-# Clone Partexp package from sirpdboy
+echo "Cloning Partexp (Partition Expansion Tool) package from sirpdboy..."
+# 克隆 Partexp 仓库
 git clone --depth 1 https://github.com/sirpdboy/luci-app-partexp.git package/luci-app-partexp
+echo "Partexp cloned."
 
-# Add other packages clone commands here if needed
-# echo 'Cloning luci-theme-argon...'
-# git clone --depth 1 https://github.com/jerrykuku/luci-theme-argon.git package/luci-theme-argon
+# Add other independent package clone commands here if needed.
+# Example:
+# echo "Cloning AdGuardHome package..."
+# git clone --depth 1 https://github.com/rufengsuixing/luci-app-adguardhome.git package/luci-app-adguardhome
 
-echo 'DIY script part 1 finished.'
+echo "DIY script part 1 finished successfully."
