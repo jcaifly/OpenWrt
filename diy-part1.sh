@@ -45,6 +45,14 @@ echo "克隆 PoweroffDevice 软件包 (来自 sirpdboy)..."
 git clone --depth 1 https://github.com/sirpdboy/luci-app-poweroffdevice.git package/luci-app-poweroffdevice
 echo "PoweroffDevice 克隆完成。"
 
+# 6. 手动添加 nft-fullcone 内核模块 (来自 fullcone-nat-nftables) *** 实验性尝试 ***
+echo "克隆 nft-fullcone 内核模块 (来自 fullcone-nat-nftables)..."
+echo "警告：需要确认此仓库是否为标准 OpenWrt 包且与内核兼容！"
+# 尝试克隆到 kmod-nft-fullcone 目录，寄希望于其内部 Makefile 定义包名为 kmod-nft-fullcone
+# 如果失败，可能需要检查该仓库结构并调整目录名或手动创建 Makefile
+git clone --depth 1 https://github.com/fullcone-nat-nftables/nft-fullcone.git package/kmod-nft-fullcone
+echo "nft-fullcone (fullcone-nat-nftables) 内核模块克隆完成。"
+
 # --- 如果需要其他独立的软件包，请在下方添加 ---
 # echo "克隆 xxx 软件包..."
 # git clone --depth 1 <你的仓库URL> package/<软件包目录名>
