@@ -29,23 +29,12 @@ echo "克隆 TurboACC 软件包 (来自 chenmozhijin)..."
 git clone --depth 1 https://github.com/chenmozhijin/turboacc.git package/luci-app-turboacc
 echo "TurboACC 克隆完成。"
 
-# 3. Partexp (分区扩容工具)
-echo "克隆 Partexp 软件包 (来自 sirpdboy)..."
-git clone --depth 1 https://github.com/sirpdboy/luci-app-partexp.git package/luci-app-partexp
-echo "Partexp 克隆完成。"
-
-# 4. Diskman (图形化磁盘管理) (使用 lisaac 源)
-echo "克隆 Diskman 软件包 (来自 lisaac)..."
-# 注意：lloyd18 源已失效，使用 lisaac 替代
-git clone --depth 1 https://github.com/lisaac/luci-app-diskman.git package/luci-app-diskman
-echo "Diskman 克隆完成。"
-
-# 5. PoweroffDevice (替代 Advanced Reboot/Shutdown)
+# 3. PoweroffDevice (替代 Advanced Reboot/Shutdown)
 echo "克隆 PoweroffDevice 软件包 (来自 sirpdboy)..."
 git clone --depth 1 https://github.com/sirpdboy/luci-app-poweroffdevice.git package/luci-app-poweroffdevice
 echo "PoweroffDevice 克隆完成。"
 
-# 6. 手动添加 nft-fullcone 内核模块 (来自 fullcone-nat-nftables) *** 实验性尝试 ***
+# 4. 手动添加 nft-fullcone 内核模块 (来自 fullcone-nat-nftables) *** 实验性尝试 ***
 echo "克隆 nft-fullcone 内核模块 (来自 fullcone-nat-nftables)..."
 echo "警告：需要确认此仓库是否为标准 OpenWrt 包且与内核兼容！"
 # 尝试克隆到 kmod-nft-fullcone 目录，寄希望于其内部 Makefile 定义包名为 kmod-nft-fullcone
