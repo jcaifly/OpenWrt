@@ -1,43 +1,50 @@
 #!/bin/bash
+#
+# https://github.com/P3TERX/Actions-OpenWrt
+# File name: diy-part2.sh
+# Description: OpenWrt DIY script part 2 (After Update feeds)
+#
+# Copyright (c) 2019-2024 P3TERX <https://p3terx.com>
+#
+# This is free software, licensed under the MIT License.
+# See /LICENSE for more information.
+#
 
-#=================================================
-# Description: OpenWrt DIY script part 1 (Before Update feeds)
-# Lisence: MIT
-# Author: Your Name
-# Blog: https://example.com
-#=================================================
+# Modify default IP using uci-defaults (Recommended Method)
+echo "Setting default IP to 192.168.123.1 using uci-defaults..."
+# 创建一个 uci-defaults 脚本来在首次启动时设置 IP
+cat <<EOF > package/base-files/files/etc/uci-defaults/99-default-network-ip
+#!/bin/sh
+uci -q delete network.lan.ipaddr
+uci set network.lan.ipaddr='192.168.123.1'
+uci commit network
+exit 0
+EOF
+echo "Default IP will be set to 192.168.123.1 via uci-defaults on first boot."
 
-# 设置固件源码根目录（如果脚本不在源码根目录执行，可能需要调整）
-# WORKDIR=$PWD
+# --- 以下是您原来文件中被注释掉或无效的部分，根据需要选择性保留或修改 ---
 
-# 1. 添加软件包源码
+# 【无效/不推荐】原始的修改默认 IP 的方式 (已被上面的 uci-defaults 方式取代)
+# sed -i 's/192.168.1.1/192.168.123.1/g' package/base-files/files/bin/config_generate
 
-# 添加 OpenClash 源码
-# 注意：请确保 OpenClash 及其依赖与你编译的 OpenWrt 版本兼容
-echo 'Adding OpenClash source...'
-# 进入 package 目录（如果当前目录不是源码根目录，需要调整路径）
-# cd $WORKDIR/package
-git clone --depth 1 https://github.com/vernesong/OpenClash.git luci-app-openclash
-# 如果上一个地址访问有问题，可以尝试镜像
-# git clone --depth 1 https://github.com/repo-holder/OpenClash.git luci-app-openclash
+# 修改默认主题 (如果需要修改主题，取消下面一行的注释，并确保已在 .config 中选中主题)
+# echo "Setting default theme..."
+# sed -i 's/luci-theme-bootstrap/luci-theme-argon/g' feeds/luci/collections/luci/Makefile
 
-# 添加 TurboACC 网络加速源码 (包含 HwNAT 和 SFE)
-# 注意：TurboACC 的兼容性可能随 OpenWrt 版本变化，确保它支持你的内核版本
-echo 'Adding TurboACC source...'
-# cd $WORKDIR/package
-git clone --depth 1 https://github.com/chenmozhijin/turboacc.git luci-app-turboacc
+# 修改主机名 (使用 uci-defaults 设置为 "OpenWrt")
+echo "Setting default hostname to 'OpenWrt' using uci-defaults..."
+cat <<EOF > package/base-files/files/etc/uci-defaults/98-default-hostname
+#!/bin/sh
+uci -q delete system.@system[0].hostname
+uci set system.@system[0].hostname='OpenWrt' # **在这里将主机名设置为 OpenWrt**
+uci commit system
+exit 0
+EOF
+echo "Default hostname will be set to 'OpenWrt' via uci-defaults on first boot."
 
-# 添加 PoweroffDevice 关机助手源码
-echo 'Adding PoweroffDevice source...'
-# cd $WORKDIR/package
-git clone --depth 1 https://github.com/sirpdboy/luci-app-poweroffdevice.git luci-app-poweroffdevice
+# 【无效/不推荐】原始的修改主机名的方式
+# sed -i 's/OpenWrt/P3TERX-Router/g' package/base-files/files/bin/config_generate
 
-# (可选) 如果需要添加其他独立软件包，在此处继续添加 git clone 命令
-# 例如:
-# echo 'Adding xxx package...'
-# git clone --depth 1 <xxx_package_repo_url> package/luci-app-xxx
+# --- 在这里可以添加其他您需要的修改 ---
 
-echo 'diy-part1.sh execution finished.'
-
-# 注意：此脚本只负责添加源码，软件包的选择和编译需要在后续的 .config 文件或 menuconfig 中完成。
-# 此脚本默认认为它在 OpenWrt 源码的根目录下运行，GitHub Actions 的 workflow 通常就是这样设置的。
+echo "diy-part2.sh finished."
