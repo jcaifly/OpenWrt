@@ -6,11 +6,6 @@
 # 参数说明:
 # --depth 1: 只克隆最近一次 commit，减少下载时间和空间占用
 
-# 检查 package 目录是否存在，如果不存在则创建
-if [ ! -d "package" ]; then
-  mkdir -p package
-fi
-
 # 1. 添加 OpenClash 软件包及其 LuCI 界面
 echo '添加 OpenClash...'
 git clone --depth 1 https://github.com/vernesong/OpenClash.git package/luci-app-openclash
