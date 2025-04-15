@@ -23,4 +23,8 @@ git clone --depth 1 https://github.com/chenmozhijin/turboacc.git package/luci-ap
 echo '添加 PoweroffDevice...'
 git clone --depth 1 https://github.com/sirpdboy/luci-app-poweroffdevice.git package/luci-app-poweroffdevice
 
+# 4. 添加kmod-nft-fullcone
+echo '添加 kmod-nft-fullcone...'
+git clone --depth 1 https://github.com/fullcone-nat-nftables/nft-fullcone.git package/kmod-nft-fullcone
+
 echo 'diy-part1.sh 执行完毕.'
