@@ -1,25 +1,35 @@
 #!/bin/bash
+#
+# Copyright (c) 2019-2020 P3TERX <https://p3terx.com>
+#
+# This is free software, licensed under the MIT License.
+# See /LICENSE for more information.
+#
+# https://github.com/P3TERX/Actions-OpenWrt
+# File name: diy-part1.sh
+# Description: OpenWrt DIY script part 1 (Before Update feeds)
+#
 
-# 功能: 添加额外的 OpenWrt 软件包源代码
-# 运行环境: OpenWrt GitHub Actions or 本地编译环境的根目录
+# Uncomment a feed source
+#sed -i 's/^#\(.*helloworld\)/\1/' feeds.conf.default
 
-# 参数说明:
-# --depth 1: 只克隆最近一次 commit，减少下载时间和空间占用
+# Add a feed source
+#echo 'src-git helloworld https://github.com/fw876/helloworld' >>feeds.conf.default
+#echo 'src-git passwall https://github.com/xiaorouji/openwrt-passwall' >>feeds.conf.default
 
-# 1. 添加 OpenClash 软件包及其 LuCI 界面
-echo '添加 OpenClash...'
+# 添加 OpenClash 源码仓库 (Add OpenClash repository)
+# 参数 --depth 1 表示只克隆最近一次提交，减小下载量 (Parameter --depth 1 clones only the latest commit to reduce download size)
 git clone --depth 1 https://github.com/vernesong/OpenClash.git package/luci-app-openclash
+echo "Cloned OpenClash repository."
 
-# 2. 添加 Turbo ACC 网络加速引擎软件包及其 LuCI 界面
-# echo '添加 Turbo ACC...'
-# git clone --depth 1 https://github.com/chenmozhijin/turboacc.git package/luci-app-turboacc
-
-# 3. 添加关机功能 LuCI 界面
-echo '添加 PoweroffDevice...'
+# 添加 PoweroffDevice 源码仓库 (Add PoweroffDevice repository)
 git clone --depth 1 https://github.com/sirpdboy/luci-app-poweroffdevice.git package/luci-app-poweroffdevice
+echo "Cloned PoweroffDevice repository."
 
-# 4. 添加kmod-nft-fullcone
-# echo '添加 kmod-nft-fullcone...'
-# git clone --depth 1 https://github.com/fullcone-nat-nftables/nft-fullcone.git package/kmod-nft-fullcone
+# 注意：请确保你的编译环境中网络连接正常，以便克隆这些仓库。
+# Note: Ensure your build environment has a working internet connection to clone these repositories.
 
-echo 'diy-part1.sh 执行完毕.'
+# 可以在此添加更多独立的软件包仓库，遵循一行一个仓库的原则
+# You can add more independent package repositories here, following the one-repo-per-line principle.
+# 例如: git clone --depth 1 <repo_url> package/<package_name>
+# Example: git clone --depth 1 <repo_url> package/<package_name>
