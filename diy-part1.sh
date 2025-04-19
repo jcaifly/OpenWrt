@@ -11,15 +11,15 @@ echo '添加 OpenClash...'
 git clone --depth 1 https://github.com/vernesong/OpenClash.git package/luci-app-openclash
 
 # 2. 添加 Turbo ACC 网络加速引擎软件包及其 LuCI 界面
-echo '添加 Turbo ACC...'
-git clone --depth 1 https://github.com/chenmozhijin/turboacc.git package/luci-app-turboacc
+# echo '添加 Turbo ACC...'
+# git clone --depth 1 https://github.com/chenmozhijin/turboacc.git package/luci-app-turboacc
 
 # 3. 添加关机功能 LuCI 界面
 echo '添加 PoweroffDevice...'
 git clone --depth 1 https://github.com/sirpdboy/luci-app-poweroffdevice.git package/luci-app-poweroffdevice
 
 # 4. 添加kmod-nft-fullcone
-echo '添加 kmod-nft-fullcone...'
-git clone --depth 1 https://github.com/fullcone-nat-nftables/nft-fullcone.git package/kmod-nft-fullcone
+# echo '添加 kmod-nft-fullcone...'
+# git clone --depth 1 https://github.com/fullcone-nat-nftables/nft-fullcone.git package/kmod-nft-fullcone
 
 echo 'diy-part1.sh 执行完毕.'
