@@ -24,6 +24,6 @@ git clone --depth 1 https://github.com/fullcone-nat-nftables/nft-fullcone.git pa
 
 # 5. SmartDNS (LuCI 界面)
 echo '添加 SmartDNS 源...'
-git clone --depth 1 https://github.com/pymumu/luci-app-smartdns.git package/luci-app-smartdns
+git clone --depth 1 https://github.com/pymumu/smartdns.git package/luci-app-smartdns
 
 echo 'diy-part1.sh 执行完毕.'
