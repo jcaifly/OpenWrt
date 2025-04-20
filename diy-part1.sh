@@ -25,7 +25,7 @@
 # 添加 SmartDNS 软件包源
 # 这个源通常包含 smartdns 二进制和 luci-app-smartdns
 # 源地址: https://github.com/pymumu/openwrt-smartdns.git
-echo 'src-git smartdns https://github.com/pymumu/openwrt-smartdns.git;lede' >>feeds.conf.default
+echo 'src-git smartdns https://github.com/pymumu/openwrt-smartdns.git' >>feeds.conf.default
 
 # 克隆 luci-app-openclash
 # 源地址: https://github.com/vernesong/OpenClash.git
