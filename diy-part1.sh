@@ -25,7 +25,7 @@
 # 添加 SmartDNS 软件包源
 # 这个源通常包含 smartdns 二进制和 luci-app-smartdns
 # 源地址: https://github.com/pymumu/openwrt-smartdns.git
-echo 'src-git smartdns https://github.com/pymumu/openwrt-smartdns.git' >>feeds.conf.default
+# echo 'src-git smartdns https://github.com/pymumu/openwrt-smartdns.git' >>feeds.conf.default
 
 # 克隆 luci-app-openclash
 # 源地址: https://github.com/vernesong/OpenClash.git
@@ -33,7 +33,7 @@ git clone --depth 1 https://github.com/vernesong/OpenClash.git package/luci-app-
 
 # 克隆 luci-app-turboacc
 # 源地址: https://github.com/chenmozhijin/turboacc.git
-git clone --depth 1 https://github.com/chenmozhijin/turboacc.git package/luci-app-turboacc
+# git clone --depth 1 https://github.com/chenmozhijin/turboacc.git package/luci-app-turboacc
 
 # 克隆 luci-app-poweroffdevice (关机功能)
 # 源地址: https://github.com/sirpdboy/luci-app-poweroffdevice.git
@@ -41,7 +41,7 @@ git clone --depth 1 https://github.com/sirpdboy/luci-app-poweroffdevice.git pack
 
 # 克隆 kmod-nft-fullcone (配合 Firewall4 实现 FullCone NAT)
 # 源地址: https://github.com/fullcone-nat-nftables/nft-fullcone.git
-git clone --depth 1 https://github.com/fullcone-nat-nftables/nft-fullcone.git package/kmod-nft-fullcone
+# git clone --depth 1 https://github.com/fullcone-nat-nftables/nft-fullcone.git package/kmod-nft-fullcone
 
 # 注意：luci-app-smartdns 将从上面添加的 smartdns feed 中获取，不再单独克隆。
 
