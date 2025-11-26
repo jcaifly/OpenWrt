@@ -4,25 +4,26 @@
 # Description: OpenWrt DIY script part 2 (After Update feeds)
 #
 
-# 1. 设置管理地址为 192.168.123.1
+# 1. 修改默认 IP 为 192.168.123.1
 sed -i 's/192.168.1.1/192.168.123.1/g' package/base-files/files/bin/config_generate
 
-# 2. 设置主机名为 OpenWrt
+# 2. 修改主机名为 OpenWrt
 sed -i 's/hostname=".*"/hostname="OpenWrt"/g' package/base-files/files/bin/config_generate
 
 # 3. 下载插件源码
-# ----------------------------------------------------------
+# ------------------------------------------------------------------
 
 # (A) 下载 OpenClash
-# 我们先清理可能存在的旧目录，确保干净
+# 先清理以防万一，下载到 package/luci-app-openclash
 rm -rf package/luci-app-openclash
 git clone --depth 1 https://github.com/vernesong/OpenClash.git package/luci-app-openclash
 
 # (B) 下载 luci-app-poweroffdevice
+# 下载到 package/luci-app-poweroffdevice
 rm -rf package/luci-app-poweroffdevice
 git clone --depth 1 https://github.com/sirpdboy/luci-app-poweroffdevice.git package/luci-app-poweroffdevice
 
-# 4. 修复/调整 (针对 Lede 源码的优化)
-# ----------------------------------------------------------
-# 确保 luci-app-poweroffdevice 编译时能找到正确的路径
-# 如果插件结构复杂，通常直接 clone 到 package 根目录即可被识别
+# 4. 针对 Newifi 3 (D2) 的 WiFi 信号优化 (可选)
+# ------------------------------------------------------------------
+# 修改 wifi 默认开启 (Newifi D2 某些源码默认 WiFi 是关闭的)
+sed -i 's/disabled=1/disabled=0/g' package/kernel/mac80211/files/lib/wifi/mac80211.sh
